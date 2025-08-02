@@ -1,12 +1,16 @@
 <div
     #zoomContainer
-    class="ngxImageZoomContainer"
+    class="ngxImageZoomContainer {{containerClassName}}"
     [style.width.px]="this.zoomService.thumbWidth"
     [style.height.px]="this.zoomService.thumbHeight"
+    [ngStyle]="this.zoomService.thumbWidth>1&&this.zoomService.thumbHeight>1?{
+        width: this.zoomService.thumbWidth+'px',
+        height: this.zoomService.thumbHeight+'px'
+    }:{}"
 >
     <img
         #imageThumbnail
-        class="ngxImageZoomThumbnail"
+        class="ngxImageZoomThumbnail {{imageClassName}}"
         [alt]="altText"
         [title]="titleText"
         [src]="thumbImage"

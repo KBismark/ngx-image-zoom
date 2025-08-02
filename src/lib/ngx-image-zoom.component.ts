@@ -11,7 +11,7 @@ import {
     ViewChild,
 } from '@angular/core';
 import { SafeUrl } from '@angular/platform-browser';
-import { Subscription } from 'rxjs';
+import { Subscription, timer } from 'rxjs';
 import { NgxImageZoomService } from './ngx-image-zoom.service';
 import { ClickZoomMode } from './zoom-modes/click-zoom-mode';
 import { HoverFreezeZoomMode } from './zoom-modes/hover-freeze-zoom-mode';
@@ -33,6 +33,7 @@ export interface Coord {
     providers: [NgxImageZoomService],
 })
 export class NgxImageZoomComponent implements OnInit, OnChanges, OnDestroy {
+    private imageLoadSub: any;
     private static readonly validZoomModes: string[] = [
         'hover',
         'toggle',
@@ -75,6 +76,9 @@ export class NgxImageZoomComponent implements OnInit, OnChanges, OnDestroy {
     ]);
 
     constructor(public zoomService: NgxImageZoomService, private renderer: Renderer2) {}
+
+    @Input() containerClassName = '';
+    @Input() imageClassName = '';
 
     @Input('thumbImage')
     public set setThumbImage(thumbImage: string | SafeUrl | null) {
@@ -170,6 +174,9 @@ export class NgxImageZoomComponent implements OnInit, OnChanges, OnDestroy {
     ngOnDestroy(): void {
         this.subscriptions.forEach((subscription) => subscription.unsubscribe());
         this.eventListeners.forEach((destroyFn) => destroyFn());
+        if(this.imageLoadSub){
+            this.imageLoadSub.unsubscribe();
+        }
     }
 
     private registerServiceSubscriptions() {
@@ -221,11 +228,15 @@ export class NgxImageZoomComponent implements OnInit, OnChanges, OnDestroy {
      * Template helper methods
      */
     onThumbImageLoaded() {
-        // Pass along image sizes to the service.
-        this.zoomService.thumbWidth = this.imageThumbnail.nativeElement.width;
-        this.zoomService.thumbHeight = this.imageThumbnail.nativeElement.height;
-        this.thumbImageLoaded = true;
-        this.checkImagesLoaded();
+        this.imageLoadSub = timer(500).subscribe(()=>{
+            // Pass along image sizes to the service.
+            const boundingRect = this.imageThumbnail.nativeElement.getBoundingClientRect();
+            this.zoomService.thumbWidth = boundingRect.width;
+            this.zoomService.thumbHeight = boundingRect.height;
+            this.thumbImageLoaded = true;
+            this.checkImagesLoaded();
+        })
+        
     }
 
     onFullImageLoaded() {
